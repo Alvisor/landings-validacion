@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AlarmLint | Find the AWS alarms that will never fire</title>
+<meta name="description" content="AlarmLint scans your AWS account and finds CloudWatch alarms that can never trigger, plus critical resources with no alarm at all.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;700;800&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f5f6; --surface: #ffffff; --line: #d9dde2; --text: #14171b; --muted: #59626e;
+    --accent: #b86e00; --accent-ink: #ffffff; --bad: #c2362f; --ok: #1f8a5b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0c0e11; --surface: #14181d; --line: #262d36; --text: #e7eaee; --muted: #8f99a6; --accent: #ffb020; --accent-ink: #15120a; --bad: #ff6b63; --ok: #45d69a; }
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--text); font: 17px/1.6 "Geist", system-ui, sans-serif; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+  .mono { font-family: "Geist Mono", ui-monospace, monospace; }
+  nav { display: flex; justify-content: space-between; align-items: center; height: 68px; }
+  .logo { font-family: "Geist Mono", monospace; font-weight: 500; font-size: 18px; }
+  .logo b { color: var(--accent); font-weight: 500; }
+  .btn { display: inline-block; background: var(--accent); color: var(--accent-ink); font-weight: 700; padding: 13px 22px; border-radius: 4px; text-decoration: none; border: 0; font: inherit; font-weight: 700; cursor: pointer; white-space: nowrap; transition: transform .15s ease, filter .15s ease; }
+  .btn:hover { filter: brightness(1.08); }
+  .btn:active { transform: translateY(1px); }
+  .btn.small { padding: 8px 14px; font-size: 14px; }
+
+  .hero { display: grid; grid-template-columns: 1fr 1.05fr; gap: 56px; align-items: center; padding: 64px 0 88px; }
+  h1 { font-size: clamp(38px, 5vw, 60px); line-height: 1.04; letter-spacing: -.035em; font-weight: 800; }
+  h1 i { color: var(--accent); font-style: italic; }
+  .sub { color: var(--muted); font-size: 19px; margin: 22px 0 30px; max-width: 30em; }
+
+  .report { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; font-family: "Geist Mono", monospace; font-size: 13.5px; }
+  .report header { display: flex; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--line); color: var(--muted); }
+  .finding { display: grid; grid-template-columns: 78px 1fr; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+  .finding:last-child { border-bottom: 0; }
+  .finding .k { font-weight: 500; }
+  .finding .k.dead { color: var(--bad); } .finding .k.gap { color: var(--accent); } .finding .k.ok { color: var(--ok); }
+  .finding p { color: var(--muted); }
+  .finding strong { color: var(--text); font-weight: 500; display: block; }
+  .caption { color: var(--muted); font-size: 13px; margin-top: 10px; }
+
+  section { padding: 88px 0; }
+  h2 { font-size: clamp(30px, 3.8vw, 44px); letter-spacing: -.03em; line-height: 1.1; max-width: 18em; }
+  .lead { color: var(--muted); max-width: 38em; margin-top: 14px; font-size: 18px; }
+
+  .bento { display: grid; grid-template-columns: 1.4fr 1fr; grid-template-rows: auto auto; gap: 16px; margin-top: 44px; }
+  .cell { border: 1px solid var(--line); border-radius: 4px; padding: 28px; background: var(--surface); }
+  .cell.big { grid-row: span 2; background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 14%, var(--surface)), var(--surface) 60%); display: flex; flex-direction: column; justify-content: space-between; gap: 40px; }
+  .cell h3 { font-size: 22px; letter-spacing: -.02em; margin-bottom: 8px; }
+  .cell p { color: var(--muted); }
+  .cell code { font-family: "Geist Mono", monospace; font-size: 13px; background: var(--bg); border: 1px solid var(--line); padding: 2px 6px; border-radius: 3px; color: var(--text); }
+  .cell.stripe { background: repeating-linear-gradient(135deg, var(--surface) 0 14px, color-mix(in srgb, var(--line) 45%, var(--surface)) 14px 15px); }
+
+  .flow { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 44px; border-top: 1px solid var(--line); }
+  .flow div { padding: 26px 26px 0 0; }
+  .flow h3 { font-size: 20px; margin-bottom: 6px; }
+  .flow h3 span { font-family: "Geist Mono", monospace; color: var(--accent); font-weight: 500; margin-right: 10px; }
+  .flow p { color: var(--muted); }
+
+  .offer { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; }
+  .amount { font-size: 56px; font-weight: 800; letter-spacing: -.04em; margin-top: 28px; line-height: 1; }
+  .amount small { font-size: 17px; font-weight: 400; color: var(--muted); letter-spacing: 0; }
+  .amount s { font-size: 24px; color: var(--muted); font-weight: 400; margin-left: 10px; }
+  .includes { margin-top: 22px; display: grid; gap: 10px; color: var(--muted); padding: 0; list-style: none; }
+  .includes li::before { content: "+ "; color: var(--accent); font-family: "Geist Mono", monospace; }
+
+  form { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 28px; display: grid; gap: 16px; }
+  .field { display: grid; gap: 6px; }
+  .field label { font-size: 14px; font-weight: 500; }
+  .field small { color: var(--muted); font-size: 13px; }
+  input, select, textarea { background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 4px; padding: 12px; font: inherit; font-size: 16px; width: 100%; }
+  input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .hp { position: absolute; left: -9999px; }
+  .status { font-size: 15px; min-height: 1.4em; }
+  .status.ok { color: var(--ok); } .status.err { color: var(--bad); }
+
+  .faq { display: grid; grid-template-columns: 1fr 1fr; gap: 0 48px; margin-top: 36px; }
+  details { border-top: 1px solid var(--line); padding: 18px 0; }
+  summary { cursor: pointer; font-weight: 700; font-size: 17px; }
+  details p { color: var(--muted); margin-top: 10px; }
+  footer { padding: 36px 0 48px; color: var(--muted); font-size: 14px; border-top: 1px solid var(--line); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .rise { animation: rise .7s cubic-bezier(.16,1,.3,1) both; }
+    .rise.d2 { animation-delay: .12s; }
+    @keyframes rise { from { opacity: 0; transform: translateY(14px); } }
+  }
+  @media (max-width: 820px) {
+    .hero, .offer, .faq { grid-template-columns: 1fr; gap: 36px; }
+    .bento, .flow { grid-template-columns: 1fr; }
+    .cell.big { grid-row: auto; }
+    .hero { padding-top: 28px; }
+    section { padding: 64px 0; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <div class="logo">alarm<b>lint</b></div>
+    <a class="btn small" href="#scan">Get a free scan</a>
+  </nav>
+
+  <header class="hero">
+    <div class="rise">
+      <h1>Find the AWS alarms that will <i>never fire</i>.</h1>
+      <p class="sub">AlarmLint finds CloudWatch alarms that can't trigger and critical resources nobody is watching. Before the outage.</p>
+      <a class="btn" href="#scan">Get a free scan</a>
+    </div>
+    <div class="rise d2">
+      <div class="report" role="img" aria-label="Sample AlarmLint report with two dead alarms and two coverage gaps">
+        <header><span>scan: prod (us-east-1)</span><span>214 alarms</span></header>
+        <div class="finding"><span class="k dead">DEAD</span><p><strong>orders-errors-p1</strong>Alarm filters on <code>service=orders</code>; the publisher doesn't send it. No data in 30 days.</p></div>
+        <div class="finding"><span class="k dead">DEAD</span><p><strong>checkout-latency</strong>Namespace stopped receiving data after a deploy on Jun 14.</p></div>
+        <div class="finding"><span class="k gap">GAP</span><p><strong>payments-dlq</strong>Dead-letter queue with no depth alarm.</p></div>
+        <div class="finding"><span class="k ok">OK</span><p><strong>197 alarms</strong>Receiving data and able to fire.</p></div>
+      </div>
+      <p class="caption">Sample report with illustrative data.</p>
+    </div>
+  </header>
+</div>
+
+<section style="border-top:1px solid var(--line)">
+  <div class="wrap">
+    <h2>A green dashboard is not the same as a safe system.</h2>
+    <p class="lead">Add a metric dimension, rename a namespace or swap a logging library, and an alarm can sit in OK forever because it no longer gets data.</p>
+    <div class="bento">
+      <div class="cell big">
+        <div><h3>Alarms that can't trigger</h3><p>Dimension mismatches, metrics nobody publishes anymore, and missing-data settings that hide real failures. AlarmLint compares every alarm against the data actually arriving.</p></div>
+        <p class="mono" style="font-size:14px">treatMissingData = notBreaching<br>datapoints (30d) = 0<br><span style="color:var(--bad)">this alarm can never fire</span></p>
+      </div>
+      <div class="cell"><h3>Resources with no alarm</h3><p>Lambdas without error alarms, DLQs without depth alarms, APIs without 5xx alarms, tables without throttle alarms.</p></div>
+      <div class="cell stripe"><h3>Alarms everyone ignores</h3><p>Alarms that flap or stay red for weeks until the team stops trusting the pager.</p></div>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="wrap">
+    <h2>Two minutes to connect. Nothing to install.</h2>
+    <div class="flow">
+      <div><h3><span>1</span>Connect</h3><p>One CloudFormation stack creates a read-only IAM role.</p></div>
+      <div><h3><span>2</span>Scan</h3><p>Every alarm is checked against live metrics and deployed resources.</p></div>
+      <div><h3><span>3</span>Fix</h3><p>A prioritized report with the exact fix, then weekly re-scans.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="scan" style="border-top:1px solid var(--line)">
+  <div class="wrap offer">
+    <div>
+      <h2>Founding member pricing</h2>
+      <p class="lead">I'm onboarding a small group of teams first. The first scan is free, and the founding price stays yours for life.</p>
+      <div class="amount">$29 <small>/ month per AWS account</small><s>$59</s></div>
+      <ul class="includes">
+        <li>Free first scan and full report</li>
+        <li>Weekly re-scans with Slack or email alerts</li>
+        <li>CloudWatch, Lambda, SQS, API Gateway, DynamoDB</li>
+        <li>Cancel anytime</li>
+      </ul>
+    </div>
+    <form class="lead-form" data-subject="AlarmLint: new scan request" novalidate>
+      <div class="field"><label for="al-email">Work email</label><input id="al-email" type="email" name="email" required autocomplete="email"></div>
+      <div class="field"><label for="al-name">Name</label><input id="al-name" type="text" name="name" required autocomplete="name"></div>
+      <div class="field"><label for="al-acc">AWS accounts you run</label>
+        <select id="al-acc" name="aws_accounts" required><option value="">Choose one</option><option>1</option><option>2 to 5</option><option>6 to 20</option><option>More than 20</option></select></div>
+      <div class="field"><label for="al-role">Your role</label>
+        <select id="al-role" name="role" required><option value="">Choose one</option><option>Backend or full-stack engineer</option><option>DevOps, SRE or platform</option><option>Engineering manager or CTO</option><option>Other</option></select></div>
+      <div class="field"><label for="al-story">Has a silent alarm ever burned you?</label><textarea id="al-story" name="story" rows="3"></textarea><small>Optional. It shapes what gets built first.</small></div>
+      <input class="hp" type="text" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <button class="btn" type="submit">Get a free scan</button>
+      <p class="status" role="status" aria-live="polite"></p>
+    </form>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="wrap">
+    <h2>Questions</h2>
+    <div class="faq">
+      <div>
+        <details><summary>What access does it need?</summary><p>A read-only role limited to describing alarms, listing metrics and listing resources. It never reads logs, data or secrets, and it can't change anything.</p></details>
+        <details><summary>Doesn't Trusted Advisor or Config do this?</summary><p>They check resource configuration. Neither verifies that an alarm actually receives data and can fire. That cross-check is the product.</p></details>
+        <details><summary>Datadog or Grafana support?</summary><p>The first version is CloudWatch only. Tell us in the form if you need another stack.</p></details>
+      </div>
+      <div>
+        <details><summary>What if the scan finds nothing?</summary><p>Then you got a free audit confirming your alerting works, and you pay nothing.</p></details>
+        <details><summary>When does it launch?</summary><p>Early teams get their first scan in the coming weeks, in sign-up order.</p></details>
+        <details><summary>Can it run in CI?</summary><p>A GitHub Action that blocks deploys introducing dead alarms is planned. Mention it in the form if you want it.</p></details>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer><div class="wrap">AlarmLint. Built by a backend engineer who got burned by silent alarms in production.</div></footer>
+
+<script>
+  // Destination inbox for every form submission (FormSubmit activates it on the first send)
+  const FORM_ENDPOINT = "https://formsubmit.co/ajax/alvisor.max@gmail.com";
+  const MSG = { sending: "Sending...", ok: "You're on the list. I'll email you personally to set up your scan.", err: "Something went wrong. Please try again in a minute.", invalid: "Please fill in the required fields." };
+  document.querySelectorAll(".lead-form").forEach((form) => {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const status = form.querySelector(".status");
+      const button = form.querySelector("button");
+      if (!form.checkValidity()) { form.reportValidity(); status.className = "status err"; status.textContent = MSG.invalid; return; }
+      const data = Object.fromEntries(new FormData(form));
+      if (data._honey) return;
+      data._subject = form.dataset.subject;
+      data._template = "table";
+      data.page = location.href;
+      button.disabled = true;
+      status.className = "status";
+      status.textContent = MSG.sending;
+      try {
+        const res = await fetch(FORM_ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(data) });
+        if (!res.ok) throw new Error(res.status);
+        form.reset();
+        status.className = "status ok";
+        status.textContent = MSG.ok;
+      } catch {
+        status.className = "status err";
+        status.textContent = MSG.err;
+      } finally {
+        button.disabled = false;
+      }
+    });
+  });
+</script>
+</body>
+</html>

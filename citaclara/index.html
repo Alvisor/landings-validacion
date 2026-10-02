@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CitaClara | Recordatorios de citas por WhatsApp</title>
+<meta name="description" content="CitaClara envía recordatorios por WhatsApp, recibe confirmaciones y reprograma citas solo. Para consultorios, clínicas y salones en Latinoamérica.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,700;0,800;1,800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f3f4ef; --surface: #ffffff; --line: #dcdfd5; --text: #15201a; --muted: #56625b;
+    --accent: #17603f; --accent-soft: #e2eee6; --accent-ink: #ffffff; --chat: #e7efe9; --me: #d6ecdc; --err: #b3261e;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0f1411; --surface: #161d19; --line: #27322b; --text: #e9efe9; --muted: #9aa89f; --accent: #5cc98f; --accent-soft: #1b2b22; --accent-ink: #0b130e; --chat: #1d2620; --me: #1f3a2a; --err: #ff7a70; }
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--text); font: 17px/1.6 "Plus Jakarta Sans", system-ui, sans-serif; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+  nav { display: flex; justify-content: space-between; align-items: center; height: 70px; }
+  .logo { font-weight: 800; font-size: 21px; letter-spacing: -.02em; }
+  .logo span { color: var(--accent); }
+  .btn { display: inline-block; background: var(--accent); color: var(--accent-ink); padding: 14px 24px; border-radius: 12px; text-decoration: none; border: 0; font: inherit; font-weight: 700; cursor: pointer; white-space: nowrap; transition: transform .15s ease, filter .15s ease; }
+  .btn:hover { filter: brightness(1.08); }
+  .btn:active { transform: translateY(1px); }
+  .btn.line { background: transparent; color: var(--text); border: 1.5px solid var(--line); padding: 8px 16px; font-size: 15px; }
+
+  .hero { display: grid; grid-template-columns: .9fr 1.1fr; gap: 64px; align-items: center; padding: 48px 0 96px; }
+  .hero-copy { order: 2; }
+  h1 { font-size: clamp(38px, 5vw, 60px); line-height: 1.06; letter-spacing: -.035em; font-weight: 800; }
+  h1 em { color: var(--accent); font-style: italic; padding-bottom: 4px; display: inline-block; }
+  .sub { color: var(--muted); font-size: 20px; margin: 22px 0 32px; max-width: 27em; }
+
+  .phone { order: 1; background: var(--surface); border: 1px solid var(--line); border-radius: 32px; padding: 14px; max-width: 380px; justify-self: center; width: 100%; box-shadow: 0 30px 70px -40px color-mix(in srgb, var(--accent) 60%, transparent); }
+  .phone-head { display: flex; align-items: center; gap: 10px; padding: 8px 10px 14px; border-bottom: 1px solid var(--line); }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-weight: 800; font-size: 14px; }
+  .phone-head b { display: block; font-size: 15px; }
+  .phone-head small { color: var(--muted); font-size: 12px; }
+  .thread { display: grid; gap: 10px; padding: 16px 6px 8px; font-size: 14.5px; }
+  .msg { max-width: 84%; padding: 10px 13px; border-radius: 16px; background: var(--chat); }
+  .msg.me { justify-self: end; background: var(--me); }
+  .msg time { display: block; text-align: right; color: var(--muted); font-size: 11px; margin-top: 2px; }
+
+  section { padding: 88px 0; }
+  h2 { font-size: clamp(30px, 4vw, 46px); line-height: 1.08; letter-spacing: -.03em; font-weight: 800; max-width: 17em; }
+  .lead { color: var(--muted); font-size: 18px; max-width: 36em; margin-top: 14px; }
+
+  .statement { font-size: clamp(26px, 3.4vw, 40px); font-weight: 700; letter-spacing: -.025em; line-height: 1.25; max-width: 24em; }
+  .statement span { color: var(--muted); }
+
+  .timeline { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(250px, 1fr); gap: 16px; margin-top: 40px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 8px; }
+  .moment { scroll-snap-align: start; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; }
+  .moment .when { display: inline-block; background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 14px; padding: 4px 12px; border-radius: 12px; margin-bottom: 14px; }
+  .moment h3 { font-size: 19px; margin-bottom: 6px; }
+  .moment p { color: var(--muted); font-size: 16px; }
+  .moment.last { background: var(--accent); border-color: transparent; color: var(--accent-ink); }
+  .moment.last p { color: color-mix(in srgb, var(--accent-ink) 82%, transparent); }
+  .moment.last .when { background: color-mix(in srgb, var(--accent-ink) 18%, transparent); color: var(--accent-ink); }
+
+  .fit { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
+  .fit span { border: 1.5px solid var(--line); border-radius: 12px; padding: 8px 16px; font-weight: 500; }
+
+  .signup { display: grid; grid-template-columns: 1fr 1.1fr; gap: 56px; align-items: start; }
+  .plan { margin-top: 28px; background: var(--accent-soft); border-radius: 20px; padding: 28px; }
+  .plan .amt { font-size: 52px; font-weight: 800; letter-spacing: -.04em; line-height: 1; }
+  .plan .amt small { font-size: 17px; font-weight: 500; color: var(--muted); letter-spacing: 0; }
+  .plan p { color: var(--muted); margin-top: 12px; }
+
+  form { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 30px; display: grid; gap: 16px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .field { display: grid; gap: 6px; }
+  .field label { font-size: 15px; font-weight: 700; }
+  .field small { color: var(--muted); font-size: 13px; }
+  input, select { background: var(--bg); color: var(--text); border: 1.5px solid var(--line); border-radius: 12px; padding: 12px 14px; font: inherit; font-size: 16px; width: 100%; }
+  input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .hp { position: absolute; left: -9999px; }
+  .status { font-size: 15px; min-height: 1.4em; }
+  .status.ok { color: var(--accent); font-weight: 700; } .status.err { color: var(--err); }
+
+  .qa { display: grid; grid-template-columns: repeat(2, 1fr); gap: 32px 48px; margin-top: 40px; }
+  .qa dt { font-weight: 700; font-size: 18px; margin-bottom: 6px; }
+  .qa dd { color: var(--muted); margin: 0; }
+  footer { padding: 36px 0 52px; color: var(--muted); font-size: 14px; border-top: 1px solid var(--line); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .msg { animation: in .45s cubic-bezier(.16,1,.3,1) both; }
+    .msg:nth-child(2) { animation-delay: .5s; } .msg:nth-child(3) { animation-delay: 1s; } .msg:nth-child(4) { animation-delay: 1.5s; } .msg:nth-child(5) { animation-delay: 2s; }
+    @keyframes in { from { opacity: 0; transform: translateY(8px) scale(.98); } }
+  }
+  @media (max-width: 860px) {
+    .hero, .signup, .qa { grid-template-columns: 1fr; gap: 36px; }
+    .hero-copy { order: 1; } .phone { order: 2; }
+    .hero { padding-top: 24px; }
+    .row { grid-template-columns: 1fr; }
+    form { padding: 22px; }
+    section { padding: 64px 0; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <div class="logo">Cita<span>Clara</span></div>
+    <a class="btn line" href="#prueba">Probar 30 días gratis</a>
+  </nav>
+
+  <header class="hero">
+    <div class="hero-copy">
+      <h1>Menos sillas vacías. <em>Cero llamadas</em> para confirmar.</h1>
+      <p class="sub">CitaClara recuerda cada cita por WhatsApp, recibe la confirmación y reprograma sola. Tú atiendes.</p>
+      <a class="btn" href="#prueba">Probar 30 días gratis</a>
+    </div>
+    <div class="phone" role="img" aria-label="Ejemplo de conversación de WhatsApp donde una paciente confirma y luego reprograma su cita">
+      <div class="phone-head"><div class="avatar">CO</div><div><b>Consultorio Ortiz</b><small>Mensajes automáticos de CitaClara</small></div></div>
+      <div class="thread">
+        <div class="msg">Hola Mariela, te recordamos tu cita mañana jueves a las 10:30 a. m. Responde 1 para confirmar o 2 para cambiarla.<time>9:00</time></div>
+        <div class="msg me">2<time>9:14</time></div>
+        <div class="msg">Sin problema. Tenemos libre el viernes a las 9:00 a. m. o a las 4:15 p. m. ¿Cuál prefieres?<time>9:14</time></div>
+        <div class="msg me">Viernes 4:15 porfa<time>9:16</time></div>
+        <div class="msg">Listo, quedó el viernes a las 4:15 p. m. ¡Te esperamos!<time>9:16</time></div>
+      </div>
+    </div>
+  </header>
+</div>
+
+<section style="border-top:1px solid var(--line)">
+  <div class="wrap">
+    <p class="statement">Cada paciente que no llega es una hora que ya no cobras. <span>Y llamar uno por uno para confirmar se come la mañana de tu recepción.</span></p>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="wrap">
+    <h2>Así trabaja por ti en cada cita</h2>
+    <div class="timeline">
+      <div class="moment"><span class="when">Un día antes</span><h3>Recordatorio</h3><p>Sale solo por WhatsApp, con tu nombre y la hora exacta.</p></div>
+      <div class="moment"><span class="when">Al responder</span><h3>Confirmación</h3><p>La agenda se marca como confirmada sin que nadie escriba nada.</p></div>
+      <div class="moment"><span class="when">Si no puede ir</span><h3>Nuevo horario</h3><p>Le ofrece tus horarios libres y mueve la cita en tu agenda.</p></div>
+      <div class="moment last"><span class="when">Si queda un hueco</span><h3>Lista de espera</h3><p>Avisa a quien quería un turno antes, para que la hora no se pierda.</p></div>
+    </div>
+    <div class="fit"><span>Odontología</span><span>Psicología</span><span>Fisioterapia</span><span>Medicina general</span><span>Salones y barberías</span><span>Estética</span></div>
+  </div>
+</section>
+
+<section id="prueba" style="border-top:1px solid var(--line)">
+  <div class="wrap signup">
+    <div>
+      <h2>Empieza con los primeros consultorios</h2>
+      <p class="lead">Estoy abriendo CitaClara a un grupo pequeño. Te ayudo a configurarlo personalmente, sin costo.</p>
+      <div class="plan">
+        <div class="amt">$19 <small>USD al mes por agenda</small></div>
+        <p>30 días gratis, sin tarjeta. Mensajes ilimitados de recordatorio. Cancelas cuando quieras.</p>
+      </div>
+    </div>
+    <form class="lead-form" data-subject="CitaClara: nueva solicitud de prueba" novalidate>
+      <div class="row">
+        <div class="field"><label for="cc-name">Nombre</label><input id="cc-name" type="text" name="nombre" required autocomplete="name"></div>
+        <div class="field"><label for="cc-country">País</label>
+          <select id="cc-country" name="pais" required><option value="">Elige uno</option><option>República Dominicana</option><option>México</option><option>Colombia</option><option>Perú</option><option>Chile</option><option>Argentina</option><option>Otro</option></select></div>
+      </div>
+      <div class="field"><label for="cc-email">Correo</label><input id="cc-email" type="email" name="email" required autocomplete="email"></div>
+      <div class="field"><label for="cc-wa">WhatsApp</label><input id="cc-wa" type="tel" name="whatsapp" autocomplete="tel" inputmode="tel"><small>Opcional. Solo para coordinar la configuración.</small></div>
+      <div class="row">
+        <div class="field"><label for="cc-biz">Tipo de negocio</label>
+          <select id="cc-biz" name="negocio" required><option value="">Elige uno</option><option>Consultorio médico</option><option>Odontología</option><option>Psicología o terapia</option><option>Salón, barbería o estética</option><option>Otro</option></select></div>
+        <div class="field"><label for="cc-week">Citas por semana</label>
+          <select id="cc-week" name="citas_semana" required><option value="">Elige una</option><option>Menos de 20</option><option>20 a 60</option><option>60 a 150</option><option>Más de 150</option></select></div>
+      </div>
+      <div class="field"><label for="cc-now">¿Cómo agendas hoy?</label>
+        <select id="cc-now" name="agenda_actual" required><option value="">Elige una</option><option>Cuaderno o agenda de papel</option><option>Google Calendar</option><option>Excel o Google Sheets</option><option>Un software de agenda</option><option>Por WhatsApp, a mano</option></select></div>
+      <input class="hp" type="text" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <button class="btn" type="submit">Probar 30 días gratis</button>
+      <p class="status" role="status" aria-live="polite"></p>
+    </form>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="wrap">
+    <h2>Lo que más nos preguntan</h2>
+    <dl class="qa">
+      <div><dt>¿Los mensajes salen de mi número?</dt><dd>Sí, usamos la API oficial de WhatsApp Business con el número de tu negocio. Te ayudo a activarla.</dd></div>
+      <div><dt>¿Tengo que cambiar mi forma de agendar?</dt><dd>No. Funciona con Google Calendar, y si usas cuaderno te damos una agenda simple en el celular.</dd></div>
+      <div><dt>¿Y si el paciente no tiene WhatsApp?</dt><dd>Se le envía el recordatorio por correo electrónico.</dd></div>
+      <div><dt>¿Cuánto cuesta cada mensaje?</dt><dd>Los recordatorios están incluidos en el plan, sin cobro por mensaje.</dd></div>
+      <div><dt>¿Puedo personalizar el texto?</dt><dd>Sí. Cambias el saludo, la firma y las instrucciones para cada tipo de cita.</dd></div>
+      <div><dt>¿Qué pasa al terminar la prueba?</dt><dd>Te escribo antes de que termine. Si no te convence, no se cobra nada.</dd></div>
+    </dl>
+  </div>
+</section>
+
+<footer><div class="wrap">CitaClara. Recordatorios de citas por WhatsApp para negocios de Latinoamérica.</div></footer>
+
+<script>
+  // Destination inbox for every form submission (FormSubmit activates it on the first send)
+  const FORM_ENDPOINT = "https://formsubmit.co/ajax/alvisor.max@gmail.com";
+  const MSG = { sending: "Enviando...", ok: "¡Gracias! Te escribiré en menos de 48 horas para configurar tu prueba.", err: "No se pudo enviar. Inténtalo de nuevo en un minuto.", invalid: "Completa los campos obligatorios." };
+  document.querySelectorAll(".lead-form").forEach((form) => {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const status = form.querySelector(".status");
+      const button = form.querySelector("button");
+      if (!form.checkValidity()) { form.reportValidity(); status.className = "status err"; status.textContent = MSG.invalid; return; }
+      const data = Object.fromEntries(new FormData(form));
+      if (data._honey) return;
+      data._subject = form.dataset.subject;
+      data._template = "table";
+      data.page = location.href;
+      button.disabled = true;
+      status.className = "status";
+      status.textContent = MSG.sending;
+      try {
+        const res = await fetch(FORM_ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(data) });
+        if (!res.ok) throw new Error(res.status);
+        form.reset();
+        status.className = "status ok";
+        status.textContent = MSG.ok;
+      } catch {
+        status.className = "status err";
+        status.textContent = MSG.err;
+      } finally {
+        button.disabled = false;
+      }
+    });
+  });
+</script>
+</body>
+</html>
