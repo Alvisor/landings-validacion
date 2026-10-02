@@ -83,6 +83,9 @@
   .qa dd { color: var(--muted); margin: 0; }
   footer { padding: 36px 0 52px; color: var(--muted); font-size: 14px; border-top: 1px solid var(--line); }
 
+  .demo { padding-top: 0; }
+  .demo h2 { margin-bottom: 24px; }
+  .demo video { display: block; width: 100%; aspect-ratio: 16 / 9; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); }
   @media (prefers-reduced-motion: no-preference) {
     .msg { animation: in .45s cubic-bezier(.16,1,.3,1) both; }
     .msg:nth-child(2) { animation-delay: .5s; } .msg:nth-child(3) { animation-delay: 1s; } .msg:nth-child(4) { animation-delay: 1.5s; } .msg:nth-child(5) { animation-delay: 2s; }
@@ -123,6 +126,13 @@
     </div>
   </header>
 </div>
+
+<section class="demo">
+  <div class="wrap">
+    <h2>Así se ve un día con CitaClara</h2>
+    <video src="demo.mp4" poster="demo-poster.jpg" controls muted playsinline preload="metadata" aria-label="Demostración: recordatorios, confirmaciones, cambio de cita y lista de espera actualizando la agenda"></video>
+  </div>
+</section>
 
 <section style="border-top:1px solid var(--line)">
   <div class="wrap">
@@ -224,6 +234,15 @@
       }
     });
   });
+
+  // Start the demo muted once it is mostly visible, unless the visitor prefers reduced motion
+  const demoVideo = document.querySelector(".demo video");
+  if (demoVideo && "IntersectionObserver" in window && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    const io = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) { demoVideo.play().catch(() => {}); io.disconnect(); }
+    }, { threshold: 0.6 });
+    io.observe(demoVideo);
+  }
 </script>
 </body>
 </html>

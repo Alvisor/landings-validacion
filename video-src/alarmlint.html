@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AlarmLint demo scene</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;700;800&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --bg: #0c0e11; --surface: #14181d; --line: #262d36; --text: #e7eaee; --muted: #8f99a6; --accent: #ffb020; --bad: #ff6b63; --ok: #45d69a; }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--text); font: 22px/1.5 "Geist", sans-serif; height: 100vh; overflow: hidden; }
+  .mono { font-family: "Geist Mono", monospace; }
+  .bar { height: 84px; display: flex; align-items: center; justify-content: space-between; padding: 0 64px; border-bottom: 1px solid var(--line); }
+  .logo { font-family: "Geist Mono", monospace; font-size: 28px; } .logo b { color: var(--accent); font-weight: 500; }
+  .tag { color: var(--muted); font-size: 17px; border: 1px solid var(--line); padding: 6px 14px; border-radius: 4px; }
+  main { padding: 56px 64px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; height: calc(100vh - 84px); }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 36px; }
+  h2 { font-size: 34px; letter-spacing: -.02em; margin-bottom: 10px; }
+  p.m { color: var(--muted); }
+  .btn { margin-top: 28px; background: var(--accent); color: #15120a; font: inherit; font-weight: 700; border: 0; border-radius: 4px; padding: 16px 28px; cursor: pointer; }
+  .btn[hidden] { display: none; }
+  .state { margin-top: 24px; font-family: "Geist Mono", monospace; font-size: 20px; min-height: 30px; }
+  .ok { color: var(--ok); } .bad { color: var(--bad); } .gap { color: var(--accent); }
+  .progress { height: 8px; background: var(--line); border-radius: 4px; margin-top: 22px; overflow: hidden; opacity: 0; transition: opacity .3s; }
+  .progress i { display: block; height: 100%; width: 0; background: var(--accent); transition: width 2.6s cubic-bezier(.4,0,.2,1); }
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 26px; }
+  .tile { border: 1px solid var(--line); border-radius: 6px; padding: 18px; opacity: 0; transform: translateY(10px); transition: all .5s cubic-bezier(.16,1,.3,1); }
+  .tile.on { opacity: 1; transform: none; }
+  .tile b { font-size: 46px; display: block; line-height: 1.1; }
+  .tile span { color: var(--muted); font-size: 18px; }
+  .list { display: grid; gap: 0; margin-top: 8px; font-family: "Geist Mono", monospace; font-size: 19px; }
+  .row { display: grid; grid-template-columns: 110px 1fr; padding: 16px 12px; border-bottom: 1px solid var(--line); opacity: 0; transform: translateX(14px); transition: all .45s cubic-bezier(.16,1,.3,1); cursor: pointer; border-radius: 4px; }
+  .row.on { opacity: 1; transform: none; }
+  .row.sel { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+  .row small { display: block; color: var(--muted); font-size: 16px; }
+  .detail { margin-top: 22px; opacity: 0; transition: opacity .5s; }
+  .detail.on { opacity: 1; }
+  .detail h3 { font-size: 22px; margin: 14px 0 6px; }
+  pre { background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 16px; font-family: "Geist Mono", monospace; font-size: 17px; line-height: 1.7; }
+  .del { color: var(--bad); } .add { color: var(--ok); }
+  .empty { color: var(--muted); font-family: "Geist Mono", monospace; font-size: 19px; margin-top: 18px; }
+</style>
+</head>
+<body>
+<div class="bar"><div class="logo">alarm<b>lint</b></div><div class="tag">Product preview</div></div>
+<main>
+  <section class="card">
+    <h2>1. Connect your AWS account</h2>
+    <p class="m">A read-only IAM role via one CloudFormation stack.</p>
+    <button class="btn" id="connect">Launch CloudFormation stack</button>
+    <div class="state" id="connState"></div>
+    <div id="scanBox" style="margin-top:40px;opacity:.35;transition:opacity .4s">
+      <h2>2. Scan</h2>
+      <p class="m">Every alarm checked against the metrics actually arriving.</p>
+      <button class="btn" id="scan" disabled>Run scan</button>
+      <div class="progress" id="prog"><i></i></div>
+      <div class="state" id="scanState"></div>
+    </div>
+  </section>
+  <section class="card" id="results">
+    <h2>Report</h2>
+    <div class="empty" id="empty">No scan yet.</div>
+    <div class="tiles">
+      <div class="tile"><b class="bad">2</b><span>dead alarms</span></div>
+      <div class="tile"><b class="gap">10</b><span>coverage gaps</span></div>
+      <div class="tile"><b>3</b><span>noisy alarms</span></div>
+    </div>
+    <div class="list">
+      <div class="row" id="f1"><span class="bad">DEAD</span><span>orders-errors-p1<small>No datapoints in 30 days</small></span></div>
+      <div class="row"><span class="bad">DEAD</span><span>checkout-latency<small>Namespace silent since Jun 14</small></span></div>
+      <div class="row"><span class="gap">GAP</span><span>payments-dlq<small>No depth alarm</small></span></div>
+    </div>
+    <div class="detail" id="detail">
+      <h3>Why it can't fire</h3>
+      <p class="m">The alarm filters on <span class="mono">service=orders</span>, but the publisher sends the metric without that dimension.</p>
+      <h3>Fix</h3>
+      <pre><span class="del">- Dimensions: [{ Name: service, Value: orders }]</span>
+<span class="add">+ Dimensions: []   # match what is published</span></pre>
+    </div>
+  </section>
+</main>
+<script>
+  const $ = (s) => document.querySelector(s);
+  $("#connect").onclick = () => {
+    $("#connState").innerHTML = "Creating read-only role...";
+    setTimeout(() => { $("#connState").innerHTML = '<span class="ok">Connected: prod (us-east-1)</span>'; $("#scanBox").style.opacity = 1; $("#scan").disabled = false; }, 1400);
+  };
+  $("#scan").onclick = () => {
+    $("#prog").style.opacity = 1;
+    requestAnimationFrame(() => $("#prog i").style.width = "100%");
+    let n = 0; const t = setInterval(() => { n = Math.min(214, n + 9); $("#scanState").textContent = `Checked ${n} / 214 alarms`; if (n === 214) clearInterval(t); }, 110);
+    setTimeout(() => {
+      $("#scanState").innerHTML = '<span class="ok">Scan complete</span>';
+      $("#empty").remove();
+      document.querySelectorAll(".tile").forEach((el, i) => setTimeout(() => el.classList.add("on"), i * 180));
+      document.querySelectorAll(".row").forEach((el, i) => setTimeout(() => el.classList.add("on"), 600 + i * 220));
+    }, 2800);
+  };
+  $("#f1").onclick = () => { $("#f1").classList.add("sel"); $("#detail").classList.add("on"); };
+</script>
+</body>
+</html>
