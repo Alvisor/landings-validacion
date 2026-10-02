@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Plan de validación</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;700;800&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6f6f4; --surface: #ffffff; --line: #e1e1dc; --text: #17181a; --muted: #5d6066;
+    --accent: #1f5fd1; --done: #8a8d93; --al: #b86e00; --fl: #2447d6; --cc: #17603f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #111214; --surface: #18191c; --line: #2a2c30; --text: #e8e9eb; --muted: #9a9ea6; --accent: #7aa7ff; --done: #6b6f76; --al: #ffb020; --fl: #6f8cff; --cc: #5cc98f; }
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--text); font: 16px/1.55 "Geist", system-ui, sans-serif; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
+  header.top { padding: 40px 0 28px; display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: end; }
+  h1 { font-size: clamp(30px, 4vw, 42px); letter-spacing: -.03em; line-height: 1.1; }
+  .intro { color: var(--muted); margin-top: 8px; max-width: 46em; }
+  .overall { text-align: right; }
+  .overall b { font-size: 44px; letter-spacing: -.03em; font-family: "Geist Mono", monospace; font-weight: 500; }
+  .overall span { display: block; color: var(--muted); font-size: 14px; }
+  .links { display: flex; gap: 10px; flex-wrap: wrap; margin: 4px 0 28px; }
+  .links a { color: var(--text); text-decoration: none; border: 1px solid var(--line); background: var(--surface); padding: 7px 14px; border-radius: 8px; font-size: 14px; }
+  .links a:hover { border-color: var(--accent); }
+  .tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--line); margin-bottom: 28px; overflow-x: auto; }
+  .tab { background: none; border: 0; border-bottom: 2px solid transparent; padding: 12px 16px; font: inherit; font-weight: 500; color: var(--muted); cursor: pointer; white-space: nowrap; }
+  .tab[aria-selected="true"] { color: var(--text); border-color: var(--c, var(--accent)); }
+  .tab small { font-family: "Geist Mono", monospace; margin-left: 6px; }
+  .panel { display: none; }
+  .panel.active { display: grid; grid-template-columns: 1fr 340px; gap: 28px; align-items: start; }
+  .panel > div:first-child { display: grid; gap: 22px; }
+  .group { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 22px; }
+  .group h2 { font-size: 18px; letter-spacing: -.01em; margin-bottom: 4px; }
+  .group p.when { color: var(--muted); font-size: 14px; margin-bottom: 12px; }
+  .task { display: grid; grid-template-columns: 22px 1fr; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); cursor: pointer; }
+  .task:first-of-type { border-top: 0; }
+  .task input { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--c, var(--accent)); cursor: pointer; }
+  .task span { display: block; }
+  .task small { display: block; color: var(--muted); font-size: 14px; margin-top: 2px; }
+  .task:has(input:checked) span { color: var(--done); text-decoration: line-through; }
+  aside { position: sticky; top: 16px; display: grid; gap: 16px; }
+  .box { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+  .box h3 { font-size: 15px; margin-bottom: 12px; }
+  .meter { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; margin: 6px 0 4px; }
+  .meter i { display: block; height: 100%; background: var(--c, var(--accent)); width: 0; transition: width .3s ease; }
+  .pct { font-family: "Geist Mono", monospace; font-size: 28px; }
+  .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .metrics label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+  .metrics input { font: inherit; font-family: "Geist Mono", monospace; font-size: 16px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--text); width: 100%; }
+  .rate { margin-top: 12px; font-size: 14px; color: var(--muted); }
+  .rate b { color: var(--text); font-family: "Geist Mono", monospace; font-weight: 500; }
+  .goal { font-size: 14px; color: var(--muted); }
+  .goal b { color: var(--text); }
+  textarea { width: 100%; min-height: 110px; font: inherit; font-size: 14px; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--text); resize: vertical; }
+  input:focus-visible, textarea:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .tools { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tools button { font: inherit; font-size: 14px; background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+  .tools button:hover { border-color: var(--accent); }
+  footer { color: var(--muted); font-size: 13px; padding: 36px 0 48px; }
+  @media (max-width: 900px) {
+    header.top { grid-template-columns: 1fr; }
+    .overall { text-align: left; }
+    .panel.active { grid-template-columns: 1fr; }
+    aside { position: static; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Plan de validación, 3 semanas</h1>
+      <p class="intro">Una idea gana por gente dispuesta a pagar o a dar acceso, no por visitas. Marca lo que vayas haciendo y anota los números cada viernes.</p>
+    </div>
+    <div class="overall"><b id="overall">0%</b><span>avance total</span></div>
+  </header>
+  <nav class="links" aria-label="Landings">
+    <a href="../alarmlint/">AlarmLint</a>
+    <a href="../flujolisto/">FlujoListo</a>
+    <a href="../citaclara/">CitaClara</a>
+    <a href="https://github.com/Alvisor/landings-validacion">Repo</a>
+  </nav>
+  <div class="tabs" role="tablist" id="tabs"></div>
+  <div id="panels"></div>
+</div>
+<footer><div class="wrap">El avance se guarda en este navegador. Para pasarlo a otro equipo usa Exportar e Importar.</div></footer>
+
+<script>
+  const PLAN = [
+    { id: "base", name: "Antes de empezar", color: "var(--accent)", goal: "Que cada lead llegue a tu correo diciendo de qué canal vino.", metrics: false, groups: [
+      { title: "Medición", when: "Día 1", tasks: [
+        ["Activar FormSubmit con un envío de prueba", "Hecho el 2 de octubre"],
+        ["Agregar contador de visitas (GoatCounter) a las tres landings", "Gratis, sin cookies, pedírselo a Claude"],
+        ["Usar enlaces con ?utm_source=canal en cada publicación", "El correo del lead trae la URL completa en el campo page"],
+        ["Crear la hoja de seguimiento", "Fecha, idea, canal, visitas, leads, calificados, conversaciones"],
+      ]},
+      { title: "Riesgos", when: "Antes de mover tráfico", tasks: [
+        ["Revisar cláusulas de propiedad intelectual y no competencia del contrato con Thryv", "Sobre todo para CitaClara"],
+      ]},
+      { title: "Decisión final", when: "Fin de la semana 3", tasks: [
+        ["Comparar las tres ideas por intención de pago, no por visitas", ""],
+        ["Elegir UNA idea y pausar las otras dos", ""],
+      ]},
+    ]},
+    { id: "alarmlint", name: "AlarmLint", color: "var(--al)", goal: "<b>10+</b> registros con rol técnico y <b>3</b> que acepten llamada o acceso de solo lectura.", metrics: true, groups: [
+      { title: "Semana 1: contenido ancla", when: "Artículo técnico de unas 1.200 palabras", tasks: [
+        ["Escribir el artículo sobre la alarma que nunca disparaba", "Patrón EMF + dimensión service, sin nada de Thryv"],
+        ["Incluir el script de detección de 20 líneas", ""],
+        ["Publicar en dev.to y Hashnode con enlace canónico", ""],
+        ["Versión corta en LinkedIn", ""],
+      ]},
+      { title: "Semana 2: distribución", when: "Comunidades y contacto directo", tasks: [
+        ["Post de valor en r/aws (revisar reglas de autopromoción)", ""],
+        ["Post de valor en r/devops", ""],
+        ["Enviar el artículo a Hacker News como post normal", "Show HN solo cuando el escaneo exista"],
+        ["Compartir en Slack o Discord de comunidades AWS", ""],
+        ["Mensajes directos a 15 personas SRE o platform en LinkedIn", "Ofrecer escaneo gratis, no vender"],
+      ]},
+      { title: "Semana 3: conversaciones", when: "Validar confianza y dolor", tasks: [
+        ["Llamadas de 20 minutos con los interesados", ""],
+        ["Pedir acceso de solo lectura a 3 equipos", "Si nadie lo da gratis, hay un problema de confianza"],
+        ["Anotar objeciones y herramientas que usan hoy", ""],
+      ]},
+    ]},
+    { id: "flujolisto", name: "FlujoListo", color: "var(--fl)", goal: "<b>30</b> reservas y <b>5+</b> preventas pagadas a $19.", metrics: true, groups: [
+      { title: "Semana 1: contenido ancla", when: "Mostrar, no explicar", tasks: [
+        ["Video vertical de 60 a 90 s para Reels, TikTok y Shorts", "Puede salir del demo de la landing"],
+        ["Versión horizontal para YouTube", ""],
+        ["Preparar una plantilla gratis a cambio del correo", ""],
+      ]},
+      { title: "Semana 2: distribución", when: "Comunidades hispanas y n8n", tasks: [
+        ["Publicar en community.n8n.io", ""],
+        ["Grupos de n8n en español (Facebook, Telegram, Discord)", ""],
+        ["Grupos de emprendedores de tu país, México y Colombia", "Antes y después, sin enlace directo"],
+        ["Tutorial de YouTube de 8 minutos", "Automatiza las respuestas a tus clientes con n8n gratis"],
+        ["Subir plantilla gratuita al Creator Hub de n8n", ""],
+      ]},
+      { title: "Semana 3: prueba de pago", when: "Solo si hay 30+ reservas", tasks: [
+        ["Abrir preventa del paquete Captar clientes a $19", "Lemon Squeezy o Gumroad, entrega en 2 semanas"],
+        ["Escribir a todas las reservas con el enlace de preventa", ""],
+        ["Contar preventas pagadas", "Si nadie paga, el modelo pasa a servicio, no pasivo"],
+      ]},
+    ]},
+    { id: "citaclara", name: "CitaClara", color: "var(--cc)", goal: "De 30 contactos, <b>8</b> con interés y <b>3</b> negocios que acepten probarlo.", metrics: true, groups: [
+      { title: "Semana 1: lista y primeros mensajes", when: "Contacto directo", tasks: [
+        ["Lista de 30 negocios en Google Maps", "Dentistas, psicólogos, fisios y barberías con muchas reseñas"],
+        ["Enviar los primeros 15 mensajes por WhatsApp o Instagram", "Buscar 5 consultorios para probar gratis un mes"],
+        ["Preguntar cuántos faltan por semana y cómo confirman hoy", ""],
+      ]},
+      { title: "Semana 2: más contacto y visitas", when: "La confianza cara a cara convierte más", tasks: [
+        ["Enviar los otros 15 mensajes", ""],
+        ["Visitar en persona a 5 negocios", ""],
+        ["Anotar competidores que mencionen", ""],
+      ]},
+      { title: "Semana 3: prueba", when: "Opcional con anuncios", tasks: [
+        ["Meta Ads de $50 a $80 en 2 o 3 ciudades", "Video corto del chat de WhatsApp"],
+        ["Cerrar 3 negocios para la prueba de 30 días", ""],
+        ["Revisar costo por mensaje de WhatsApp antes de prometer volumen", ""],
+      ]},
+    ]},
+  ];
+
+  const KEY = "plan-validacion-v1";
+  let state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY)) || {}; } catch { state = {}; }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
+  const tabs = document.getElementById("tabs"), panels = document.getElementById("panels");
+  const taskId = (s, g, t) => `${s}:${g}:${t}`;
+
+
+  PLAN.forEach((sec, si) => {
+    const tab = document.createElement("button");
+    tab.className = "tab"; tab.role = "tab"; tab.id = `tab-${sec.id}`; tab.style.setProperty("--c", sec.color);
+    tab.innerHTML = `${sec.name}<small id="tp-${sec.id}">0%</small>`;
+    tab.onclick = () => select(sec.id);
+    tabs.appendChild(tab);
+
+    const panel = document.createElement("section");
+    panel.className = "panel"; panel.id = `panel-${sec.id}`; panel.role = "tabpanel"; panel.style.setProperty("--c", sec.color);
+    const groups = sec.groups.map((g, gi) => `<div class="group"><h2>${g.title}</h2><p class="when">${g.when}</p>${
+      g.tasks.map(([t, d], ti) => `<label class="task"><input type="checkbox" data-id="${taskId(sec.id, gi, ti)}"><div><span>${t}</span>${d ? `<small>${d}</small>` : ""}</div></label>`).join("")
+    }</div>`).join("");
+    const m = (k, label) => `<label>${label}<input type="number" min="0" inputmode="numeric" data-m="${sec.id}:${k}"></label>`;
+    panel.innerHTML = `<div>${groups}</div><aside>
+      <div class="box"><h3>Avance</h3><div class="pct" id="pp-${sec.id}">0%</div><div class="meter"><i id="pm-${sec.id}"></i></div><p class="goal">Meta: ${sec.goal}</p></div>
+      ${sec.metrics ? `<div class="box"><h3>Números</h3><div class="metrics">${m("visitas", "Visitas")}${m("leads", "Leads")}${m("calificados", "Calificados")}${m("pagos", sec.id === "citaclara" ? "En prueba" : sec.id === "alarmlint" ? "Con acceso" : "Preventas")}</div><p class="rate">Conversión: <b id="cr-${sec.id}">-</b></p></div>` : ""}
+      <div class="box"><h3>Notas</h3><textarea data-n="${sec.id}" placeholder="Objeciones, ideas, nombres de contactos"></textarea></div>
+      ${si === 0 ? `<div class="box"><h3>Respaldo</h3><div class="tools"><button id="exp">Exportar</button><button id="imp">Importar</button><button id="rst">Reiniciar</button></div></div>` : ""}
+    </aside>`;
+    panels.appendChild(panel);
+  });
+
+  function render() {
+    let all = 0, done = 0;
+    PLAN.forEach((sec) => {
+      const boxes = [...document.querySelectorAll(`#panel-${sec.id} input[type=checkbox]`)];
+      const d = boxes.filter((b) => b.checked).length, pct = boxes.length ? Math.round((d / boxes.length) * 100) : 0;
+      all += boxes.length; done += d;
+      document.getElementById(`tp-${sec.id}`).textContent = pct + "%";
+      document.getElementById(`pp-${sec.id}`).textContent = `${pct}%  (${d}/${boxes.length})`;
+      document.getElementById(`pm-${sec.id}`).style.width = pct + "%";
+      const cr = document.getElementById(`cr-${sec.id}`);
+      if (cr) { const v = +state[`m:${sec.id}:visitas`] || 0, l = +state[`m:${sec.id}:leads`] || 0; cr.textContent = v ? ((l / v) * 100).toFixed(1) + "% de visitas a lead" : "-"; }
+    });
+    document.getElementById("overall").textContent = Math.round((done / all) * 100) + "%";
+  }
+
+  function hydrate() {
+    document.querySelectorAll("input[type=checkbox]").forEach((b) => { b.checked = !!state["t:" + b.dataset.id]; });
+    document.querySelectorAll("[data-m]").forEach((i) => { i.value = state["m:" + i.dataset.m] ?? ""; });
+    document.querySelectorAll("[data-n]").forEach((t) => { t.value = state["n:" + t.dataset.n] ?? ""; });
+    render();
+  }
+
+  panels.addEventListener("change", (e) => {
+    const el = e.target;
+    if (el.dataset.id) state["t:" + el.dataset.id] = el.checked;
+    if (el.dataset.m) state["m:" + el.dataset.m] = el.value;
+    save(); render();
+  });
+  panels.addEventListener("input", (e) => {
+    if (e.target.dataset.n) { state["n:" + e.target.dataset.n] = e.target.value; save(); }
+    if (e.target.dataset.m) { state["m:" + e.target.dataset.m] = e.target.value; save(); render(); }
+  });
+
+  function select(id) {
+    PLAN.forEach((s) => {
+      const on = s.id === id;
+      document.getElementById(`tab-${s.id}`).setAttribute("aria-selected", on);
+      document.getElementById(`panel-${s.id}`).classList.toggle("active", on);
+    });
+    try { localStorage.setItem(KEY + ":tab", id); } catch {}
+  }
+
+  document.getElementById("exp").onclick = () => {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "plan-validacion.json"; a.click(); URL.revokeObjectURL(a.href);
+  };
+  document.getElementById("imp").onclick = () => {
+    const f = document.createElement("input"); f.type = "file"; f.accept = "application/json";
+    f.onchange = async () => { try { state = JSON.parse(await f.files[0].text()); save(); hydrate(); } catch { alert("Archivo no válido"); } };
+    f.click();
+  };
+  document.getElementById("rst").onclick = () => { if (confirm("¿Borrar todo el avance guardado en este navegador?")) { state = {}; save(); hydrate(); } };
+
+  // FormSubmit activation was done on 2 Oct; preload it as checked for a fresh browser
+  if (!Object.keys(state).length) { state["t:base:0:0"] = true; save(); }
+  hydrate();
+  let first = "alarmlint";
+  try { first = localStorage.getItem(KEY + ":tab") || "base"; } catch { first = "base"; }
+  select(PLAN.some((s) => s.id === first) ? first : "base");
+</script>
+</body>
+</html>

@@ -89,6 +89,9 @@
   details p { color: var(--muted); margin-top: 10px; }
   footer { padding: 36px 0 52px; color: var(--muted); font-size: 14px; }
 
+  .demo { padding-top: 0; }
+  .demo h2 { margin-bottom: 24px; }
+  .demo video { display: block; width: 100%; aspect-ratio: 16 / 9; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
   @media (prefers-reduced-motion: no-preference) {
     .step { animation: pop .5s cubic-bezier(.16,1,.3,1) both; }
     .step:nth-child(3) { animation-delay: .25s; } .step:nth-child(4) { animation-delay: .5s; } .step:nth-child(5) { animation-delay: .75s; }
@@ -129,6 +132,13 @@
     </div>
   </header>
 </div>
+
+<section class="demo">
+  <div class="wrap">
+    <h2>Míralo funcionar en 30 segundos</h2>
+    <video src="demo.mp4" poster="demo-poster.jpg" controls muted playsinline preload="metadata" aria-label="Demostración: una consulta llega, se guarda, avisa por WhatsApp y el cliente recibe respuesta"></video>
+  </div>
+</section>
 
 <section style="padding-top:0">
   <div class="wrap">
@@ -244,6 +254,15 @@
       }
     });
   });
+
+  // Start the demo muted once it is mostly visible, unless the visitor prefers reduced motion
+  const demoVideo = document.querySelector(".demo video");
+  if (demoVideo && "IntersectionObserver" in window && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    const io = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) { demoVideo.play().catch(() => {}); io.disconnect(); }
+    }, { threshold: 0.6 });
+    io.observe(demoVideo);
+  }
 </script>
 </body>
 </html>

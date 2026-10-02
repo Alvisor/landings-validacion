@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>CitaClara demo scene</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --bg: #f3f4ef; --surface: #ffffff; --line: #dcdfd5; --text: #15201a; --muted: #56625b; --accent: #17603f; --soft: #e2eee6; --chat: #eef1ec; --me: #d6ecdc; --amber: #9a6a00; --amber-soft: #fbf0d4; }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--text); font: 22px/1.5 "Plus Jakarta Sans", sans-serif; height: 100vh; overflow: hidden; }
+  .stage { display: grid; grid-template-columns: 1.35fr 1fr; gap: 56px; padding: 60px 80px 150px; height: 100vh; }
+  .agenda { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 30px; }
+  .agenda header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 18px; }
+  .agenda h2 { font-size: 30px; letter-spacing: -.02em; }
+  .agenda header span { color: var(--muted); font-size: 18px; }
+  .appt { display: grid; grid-template-columns: 120px 1fr auto; align-items: center; gap: 16px; padding: 16px 14px; border-radius: 14px; border: 1.5px solid transparent; cursor: pointer; transition: background .3s, border-color .3s; }
+  .appt + .appt { margin-top: 6px; }
+  .appt.sel { border-color: var(--accent); background: var(--soft); }
+  .appt time { font-weight: 700; font-size: 22px; }
+  .appt small { display: block; color: var(--muted); font-size: 17px; }
+  .chip { font-size: 16px; font-weight: 700; padding: 6px 14px; border-radius: 10px; background: var(--chat); color: var(--muted); transition: all .35s; white-space: nowrap; }
+  .chip.sent { background: var(--amber-soft); color: var(--amber); }
+  .chip.ok { background: var(--accent); color: #fff; }
+  .chip.free { background: #fde4e1; color: #b3261e; }
+  .phone { background: var(--surface); border: 1px solid var(--line); border-radius: 36px; padding: 16px; display: flex; flex-direction: column; box-shadow: 0 30px 70px -40px rgba(23,96,63,.6); }
+  .phone-head { display: flex; gap: 12px; align-items: center; padding: 8px 10px 14px; border-bottom: 1px solid var(--line); }
+  .av { width: 44px; height: 44px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 17px; }
+  .phone-head b { display: block; font-size: 19px; } .phone-head small { color: var(--muted); font-size: 15px; }
+  .thread { flex: 1; display: flex; flex-direction: column; gap: 12px; padding: 18px 8px; font-size: 19px; overflow: hidden; justify-content: flex-end; }
+  .msg { max-width: 82%; padding: 12px 15px; border-radius: 16px; background: var(--chat); opacity: 0; transform: translateY(10px); transition: all .4s cubic-bezier(.16,1,.3,1); }
+  .msg.on { opacity: 1; transform: none; }
+  .msg.me { align-self: flex-end; background: var(--me); }
+  .msg time { display: block; text-align: right; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <section class="agenda">
+    <header><h2>Agenda de mañana</h2><span>Jueves 9 de octubre</span></header>
+    <div class="appt" id="r1"><time>9:00</time><div>Rosa Almonte<small>Limpieza dental</small></div><span class="chip">Pendiente</span></div>
+    <div class="appt" id="r2"><time>10:30</time><div>Andrés Liriano<small>Control de ortodoncia</small></div><span class="chip">Pendiente</span></div>
+    <div class="appt" id="r3"><time>11:30</time><div>Mariela Santos<small>Valoración</small></div><span class="chip">Pendiente</span></div>
+    <div class="appt" id="r4"><time>3:00</time><div>Pedro Familia<small>Extracción</small></div><span class="chip">Pendiente</span></div>
+    <div class="appt" id="r5"><time>4:30</time><div>Luisa Cabral<small>Blanqueamiento</small></div><span class="chip">Pendiente</span></div>
+  </section>
+  <section class="phone">
+    <div class="phone-head"><div class="av" id="av">CO</div><div><b id="who">Consultorio Ortiz</b><small>Mensajes automáticos de CitaClara</small></div></div>
+    <div class="thread" id="thread"></div>
+  </section>
+</div>
+<script>
+  const $ = (s) => document.querySelector(s);
+  const chip = (id, cls, txt) => { const c = $(id + " .chip"); c.className = "chip " + cls; c.textContent = txt; };
+  const say = (txt, me, t) => { const m = document.createElement("div"); m.className = "msg" + (me ? " me" : ""); m.innerHTML = txt + `<time>${t}</time>`; $("#thread").appendChild(m); requestAnimationFrame(() => requestAnimationFrame(() => m.classList.add("on"))); };
+  const openChat = (id, name) => { document.querySelectorAll(".appt").forEach((r) => r.classList.remove("sel")); $(id).classList.add("sel"); $("#who").textContent = name; $("#av").textContent = name.split(" ").map((w) => w[0]).join(""); $("#thread").innerHTML = ""; };
+  window.sendAll = () => ["#r1", "#r2", "#r3", "#r4", "#r5"].forEach((id, i) => setTimeout(() => chip(id, "sent", "Recordatorio enviado"), i * 260));
+  window.confirmMariela = () => {
+    openChat("#r3", "Mariela Santos");
+    say("Hola Mariela, te recordamos tu cita mañana a las 11:30 a. m. Responde 1 para confirmar o 2 para cambiarla.", false, "9:00");
+    setTimeout(() => say("1", true, "9:12"), 1300);
+    setTimeout(() => { say("¡Gracias! Tu cita quedó confirmada.", false, "9:12"); chip("#r3", "ok", "Confirmada"); }, 2300);
+  };
+  window.moveAndres = () => {
+    openChat("#r2", "Andrés Liriano");
+    say("Hola Andrés, te recordamos tu cita mañana a las 10:30 a. m. Responde 1 para confirmar o 2 para cambiarla.", false, "9:00");
+    setTimeout(() => say("2", true, "9:20"), 1200);
+    setTimeout(() => say("Sin problema. Tenemos libre el viernes a las 9:00 a. m. o a las 4:15 p. m.", false, "9:20"), 2100);
+    setTimeout(() => say("Viernes 4:15", true, "9:22"), 3300);
+    setTimeout(() => { say("Listo, quedó el viernes a las 4:15 p. m.", false, "9:22"); $("#r2 div").firstChild.textContent = "Turno libre"; $("#r2 small").textContent = "Andrés pasó al viernes"; chip("#r2", "free", "Hueco libre"); }, 4200);
+  };
+  window.fillGap = () => {
+    openChat("#r2", "Carolina Peña");
+    say("Hola Carolina, se liberó un turno mañana a las 10:30 a. m. ¿Lo quieres? Responde 1 para tomarlo.", false, "9:23");
+    setTimeout(() => say("1 ¡Sí!", true, "9:25"), 1300);
+    setTimeout(() => { say("Perfecto, es tuyo. Te esperamos mañana a las 10:30 a. m.", false, "9:25"); $("#r2 div").firstChild.textContent = "Carolina Peña"; $("#r2 small").textContent = "Desde la lista de espera"; chip("#r2", "ok", "Confirmada"); }, 2300);
+  };
+</script>
+</body>
+</html>
